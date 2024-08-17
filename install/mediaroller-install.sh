@@ -59,17 +59,18 @@ ln -s /opt/yt-dlp-venv/bin/yt-dlp /usr/local/bin/yt-dlp
 msg_ok "Installed yt-dlp"
 
 msg_info "Installing Go"
-GO_VERSION=$(curl -s https://go.dev/VERSION?m=text)
+GO_VERSION=$(curl -s https://go.dev/VERSION?m=text | tr -d '\n')
 if [ -z "$GO_VERSION" ]; then
     msg_error "Failed to get Go version. Please check your internet connection."
     exit 1
 fi
 msg_info "Downloading Go version: $GO_VERSION"
-wget -q "https://go.dev/dl/${GO_VERSION}.linux-amd64.tar.gz" -O /tmp/go.tar.gz
+GO_URL="https://go.dev/dl/${GO_VERSION}.linux-amd64.tar.gz"
+wget -q "$GO_URL" -O /tmp/go.tar.gz
 if [ $? -ne 0 ]; then
-    msg_error "Failed to download Go. URL: https://go.dev/dl/${GO_VERSION}.linux-amd64.tar.gz"
+    msg_error "Failed to download Go. URL: $GO_URL"
     msg_info "Trying alternative download method..."
-    curl -L "https://go.dev/dl/${GO_VERSION}.linux-amd64.tar.gz" -o /tmp/go.tar.gz
+    curl -L "$GO_URL" -o /tmp/go.tar.gz
     if [ $? -ne 0 ]; then
         msg_error "Both wget and curl failed to download Go. Please check your internet connection and firewall settings."
         exit 1
