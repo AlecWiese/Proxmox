@@ -5,7 +5,28 @@
 # License: MIT
 # https://github.com/tteck/Proxmox/raw/main/LICENSE
 
-function header_info {
+# Define msg_* functions if they're not available
+msg_info() {
+  echo -e "\e[1;33m[INFO]\e[0m $1"
+}
+
+msg_ok() {
+  echo -e "\e[1;32m[OK]\e[0m $1"
+}
+
+msg_error() {
+  echo -e "\e[1;31m[ERROR]\e[0m $1"
+}
+
+# Function to check if a command executed successfully
+check_command() {
+  if [ $? -ne 0 ]; then
+    msg_error "Failed to execute: $1"
+    exit 1
+  fi
+}
+
+header_info() {
 clear
 cat <<"EOF"
     __  ___          ___       ____        ____
@@ -20,24 +41,38 @@ EOF
 header_info
 echo -e "Loading..."
 APP="Media Roller"
-WAIT=0
 
 msg_info "Installing Dependencies"
-$STD apt-get update
-$STD apt-get install -y curl jq ffmpeg python3-pip
-$STD pip3 install --upgrade yt-dlp
+apt-get update
+check_command "apt-get update"
+apt-get install -y curl jq ffmpeg python3-pip python3-venv
+check_command "apt-get install dependencies"
 msg_ok "Installed Dependencies"
+
+msg_info "Installing yt-dlp"
+python3 -m venv /opt/yt-dlp-venv
+source /opt/yt-dlp-venv/bin/activate
+pip install --no-cache-dir yt-dlp
+check_command "pip install yt-dlp"
+deactivate
+ln -s /opt/yt-dlp-venv/bin/yt-dlp /usr/local/bin/yt-dlp
+msg_ok "Installed yt-dlp"
 
 msg_info "Installing Go"
 GO_VERSION=$(curl -s https://go.dev/VERSION?m=text)
-wget -q https://golang.org/dl/${GO_VERSION}.linux-amd64.tar.gz -O /tmp/go.tar.gz
+wget -q "https://go.dev/dl/${GO_VERSION}.linux-amd64.tar.gz" -O /tmp/go.tar.gz
+check_command "wget Go"
 tar -C /usr/local -xzf /tmp/go.tar.gz
+check_command "tar extract Go"
 export PATH=$PATH:/usr/local/go/bin
+echo "export PATH=\$PATH:/usr/local/go/bin" >> /root/.bashrc
 msg_ok "Installed Go"
 
 msg_info "Installing Media Roller"
-$STD go install github.com/rroller/media-roller@latest
+go install github.com/rroller/media-roller@latest
+check_command "go install Media Roller"
 mv ~/go/bin/media-roller /usr/local/bin/
+check_command "mv Media Roller"
 msg_ok "Installed Media Roller"
 
 msg_info "Creating Media Roller Service"
@@ -55,20 +90,21 @@ User=root
 WantedBy=multi-user.target
 EOF
 
-$STD systemctl daemon-reload
-$STD systemctl enable media-roller.service
-$STD systemctl start media-roller.service
+systemctl daemon-reload
+systemctl enable media-roller.service
+systemctl start media-roller.service
+check_command "start Media Roller service"
 msg_ok "Created Media Roller Service"
 
 msg_info "Cleaning up"
-$STD apt-get autoremove
-$STD apt-get autoclean
+apt-get autoremove -y
+apt-get autoclean -y
 msg_ok "Cleaned"
 
-msg_ok "Completed Successfully!\n"
-echo -e "Media Roller should now be running as a service."
-echo -e "You can check its status with: ${BL}systemctl status media-roller${CL}"
-echo -e "Configuration file is located at: ${BL}/root/.config/media-roller/config.yaml${CL}"
+msg_ok "Completed Successfully!"
+echo -e "\nMedia Roller should now be running as a service."
+echo -e "You can check its status with: systemctl status media-roller"
+echo -e "Configuration file is located at: /root/.config/media-roller/config.yaml"
 echo -e "Remember to configure your media directories and other settings in the config file."
 echo -e "Media Roller should be reachable by going to the following URL."
-echo -e "${BL}http://${IP}:8080${CL}\n"
+echo -e "http://$(hostname -I | awk '{print $1}'):8080\n"
