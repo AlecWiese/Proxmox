@@ -45,7 +45,7 @@ APP="Media Roller"
 msg_info "Installing Dependencies"
 apt-get update
 check_command "apt-get update"
-apt-get install -y curl jq ffmpeg python3-pip python3-venv
+apt-get install -y curl jq ffmpeg python3-pip python3-venv git
 check_command "apt-get install dependencies"
 msg_ok "Installed Dependencies"
 
@@ -92,10 +92,15 @@ fi
 msg_ok "Installed Go version: $(go version)"
 
 msg_info "Installing Media Roller"
-go install github.com/rroller/media-roller@latest
-check_command "go install Media Roller"
-mv ~/go/bin/media-roller /usr/local/bin/
+git clone https://github.com/rroller/media-roller.git /tmp/media-roller
+check_command "git clone Media Roller"
+cd /tmp/media-roller
+go build
+check_command "go build Media Roller"
+mv media-roller /usr/local/bin/
 check_command "mv Media Roller"
+cd -
+rm -rf /tmp/media-roller
 msg_ok "Installed Media Roller"
 
 msg_info "Creating Media Roller Service"
