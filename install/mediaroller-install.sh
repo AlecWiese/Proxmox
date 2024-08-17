@@ -59,7 +59,7 @@ ln -s /opt/yt-dlp-venv/bin/yt-dlp /usr/local/bin/yt-dlp
 msg_ok "Installed yt-dlp"
 
 msg_info "Installing Go"
-GO_VERSION=$(curl -s https://go.dev/VERSION?m=text | tr -d '\n')
+GO_VERSION=$(curl -s https://go.dev/VERSION?m=text | grep -o 'go[0-9.]*')
 if [ -z "$GO_VERSION" ]; then
     msg_error "Failed to get Go version. Please check your internet connection."
     exit 1
