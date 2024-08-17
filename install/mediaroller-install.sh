@@ -95,7 +95,13 @@ msg_info "Installing Media Roller"
 git clone https://github.com/rroller/media-roller.git /tmp/media-roller
 check_command "git clone Media Roller"
 cd /tmp/media-roller
-go build
+# Check if there's a cmd directory
+if [ -d "cmd" ]; then
+    cd cmd/media-roller
+fi
+go mod tidy
+check_command "go mod tidy"
+go build -o media-roller
 check_command "go build Media Roller"
 mv media-roller /usr/local/bin/
 check_command "mv Media Roller"
