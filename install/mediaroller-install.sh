@@ -66,6 +66,7 @@ if [ -z "$GO_VERSION" ]; then
 fi
 msg_info "Downloading Go version: $GO_VERSION"
 GO_URL="https://go.dev/dl/${GO_VERSION}.linux-amd64.tar.gz"
+msg_info "Download URL: $GO_URL"
 wget -q "$GO_URL" -O /tmp/go.tar.gz
 if [ $? -ne 0 ]; then
     msg_error "Failed to download Go. URL: $GO_URL"
